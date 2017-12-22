@@ -1,25 +1,10 @@
 # Add any directories, files, or patterns you don't want to be tracked by version control
-lib-cov
-*.seed
-*.log
-*.csv
-*.dat
-*.out
-*.pid
-*.gz
 
-pids
-logs
-results
 node_modules
-coverage
 npm-debug.log
 /.idea
 /.vscode
 .DS_Store
 .DSTORE
-config/development.json
-config/production.json
-config/test.json
 
 dist
