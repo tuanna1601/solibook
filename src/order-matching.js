@@ -2,7 +2,6 @@
 
 import BigNumber from 'bignumber.js';
 import Co from 'co';
-import Fawn from 'fawn';
 import Mongoose from 'mongoose';
 
 export default class OrderMatching {
@@ -53,7 +52,8 @@ export default class OrderMatching {
         return ret;
       }
     });
-    this.Order = mongoose.model('Order', order);
+    this.orderModelName = `${prefix}_Order`;
+    this.Order = mongoose.model(this.orderModelName, order);
 
     // marketData model
 
@@ -82,8 +82,10 @@ export default class OrderMatching {
       },
     });
 
-    this.MarketData = mongoose.model('MarketData', marketData);
+    this.marketDataModelName = `${prefix}_MarketData`;
+    this.MarketData = mongoose.model(this.marketDataModelName, marketData);
 
+    this.task = fawn.Task();
     this.onAfterMatched = onAfterMatched;
     this.matchNextOrder();
   }
@@ -124,12 +126,12 @@ export default class OrderMatching {
         latestVolume = volume;
         latestPrice = price;
         this.task
-          .update('Order', {
+          .update(this.orderModelName, {
             _id: order._id,
           }, {
             currentVolume: BigNumber(order.currentVolume).minus(volume),
           })
-          .update('Order', {
+          .update(this.orderModelName, {
             _id: matching._id,
           }, {
             currentVolume: BigNumber(matching.currentVolume).minus(volume),
@@ -145,7 +147,7 @@ export default class OrderMatching {
 
       // set processed
       await this.task
-        .update('Order', {
+        .update(this.orderModelName, {
           _id: order._id,
         }, {
           status: 'processed',
@@ -187,7 +189,7 @@ export default class OrderMatching {
           latestPrice = latestMarketData.matchPrice;
       }
 
-      await this.task.save('MarketData', {
+      await this.task.save(this.marketDataModelName, {
         sellVolume: latestSellOrder ? latestSellOrder.currentVolume : '',
         sellPrice: latestSellOrder ? latestSellOrder.limit : '',
         buyVolume: latestBuyOrder ? latestBuyOrder.currentVolume : '',
@@ -233,7 +235,7 @@ export default class OrderMatching {
         userId,
         isSelling,
       };
-      await this.task.save('Order', order).run({ useMongoose: true });
+      await this.task.save(this.orderModelName, order).run({ useMongoose: true });
       this.matchNextOrder();
     } catch (err) {
       console.log(err);
@@ -242,7 +244,7 @@ export default class OrderMatching {
 
   async cancelOrder(orderId) {
     try {
-      await this.task.update('Order', {
+      await this.task.update(this.orderModelName, {
         _id: orderId,
       }, {
           status: 'canceled',
