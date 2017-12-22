@@ -184,7 +184,7 @@ export default class OrderMatching {
 
       const latestMarketData = await this.getLatestMarketData();
 
-      if (!latestVolume && !matchPrice && latestMarketData) {
+      if (!latestVolume && !latestPrice && latestMarketData) {
         latestVolume = latestMarketData.matchVolume,
           latestPrice = latestMarketData.matchPrice;
       }
