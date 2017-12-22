@@ -6,7 +6,7 @@ import Fawn from 'fawn';
 import Mongoose from 'mongoose';
 
 export default class OrderMatching {
-  constructor(mongoose, onAfterMatched, getMarketData) {
+  constructor(mongoose, fawn, prefix, onAfterMatched = () => { }) {
 
     // order model
     const Schema = Mongoose.Schema;
@@ -84,9 +84,7 @@ export default class OrderMatching {
 
     this.MarketData = mongoose.model('MarketData', marketData);
 
-    Fawn.init(mongoose);
-    this.task = Fawn.Task();
-    this.onAfterMatched = onAfterMatched || (() => {});
+    this.onAfterMatched = onAfterMatched;
     this.matchNextOrder();
   }
 
