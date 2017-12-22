@@ -292,4 +292,12 @@ export default class OrderMatching {
       console.log(err);
     }
   }
+
+  getOrderModel() {
+    return this.Order;
+  }
+
+  getMarketDataModel() {
+    return this.MarketData;
+  }
 }
