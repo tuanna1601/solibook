@@ -6,7 +6,7 @@ import Fawn from 'fawn';
 import Mongoose from 'mongoose';
 
 export default class OrderMatching {
-  constructor(mongoose, fawn, prefix, onAfterMatched = () => { }, onBeforePlaceOrder = () => { }) {
+  constructor(mongoose, fawn, prefix) {
 
     // order model
     const Schema = Mongoose.Schema;
@@ -87,9 +87,13 @@ export default class OrderMatching {
     this.MarketData = mongoose.model(this.marketDataModelName, marketData);
 
     this.task = fawn.Task();
-    this.onAfterMatched = onAfterMatched;
-    this.onBeforePlaceOrder = onBeforePlaceOrder;
     this.matchNextOrder();
+  }
+
+  addHooks(onBeforePlaceOrder = () => { }, onAfterMatched = () => { }, onCancelOrder = () => { }) {
+    this.onBeforePlaceOrder = onBeforePlaceOrder;
+    this.onAfterMatched = onAfterMatched;
+    this.onCancelOrder = onCancelOrder;
   }
 
   async processOrder(order) {
@@ -138,7 +142,7 @@ export default class OrderMatching {
           }, {
             currentVolume: BigNumber(matching.currentVolume).minus(volume),
           });
-        this.onAfterMatched(this.task, order._id, matching._id, volume.valueOf(), price);
+        this.onAfterMatched(this.task, order, matching, volume.valueOf(), price);
         await this.task.run({ useMongoose: true })
           .then((results) => {
             if (results[0].nModified = 1) {
@@ -230,7 +234,9 @@ export default class OrderMatching {
 
   async placeOrder(limit, volume, userId, isSelling = false) {
     try {
+      const orderId = Mongoose.Types.ObjectId();
       const order = {
+        _id: orderId,
         limit,
         originalVolume: volume,
         currentVolume: volume,
@@ -238,7 +244,7 @@ export default class OrderMatching {
         isSelling,
       };
       this.task.save(this.orderModelName, order);
-      this.onBeforePlaceOrder(this.task, limit, volume, userId, isSelling);
+      this.onBeforePlaceOrder(this.task, orderId, limit, volume, userId, isSelling);
       await this.task.run({ useMongoose: true });
       this.matchNextOrder();
     } catch (err) {
@@ -248,11 +254,14 @@ export default class OrderMatching {
 
   async cancelOrder(orderId) {
     try {
-      await this.task.update(this.orderModelName, {
+      this.task.update(this.orderModelName, {
         _id: orderId,
       }, {
           status: 'canceled',
-        }).run({ useMongoose: true });
+        })
+      const order = await this.Order.findById(orderId);
+      this.onCancelOrder(this.task, order);
+      await this.task.run({ useMongoose: true });
 
     } catch (err) {
       console.log(err);
