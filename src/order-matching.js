@@ -86,7 +86,7 @@ export default class OrderMatching {
 
     Fawn.init(mongoose);
     this.task = Fawn.Task();
-    this.onAfterMatched = onAfterMatched;
+    this.onAfterMatched = onAfterMatched || (() => {});
     this.matchNextOrder();
   }
 
@@ -219,7 +219,7 @@ export default class OrderMatching {
         return;
       }
       await this.processOrder(order);
-      await this.matchNextOrder();
+      this.matchNextOrder();
     } catch (err) {
       console.log(err);
       this.processing = false;
@@ -236,7 +236,7 @@ export default class OrderMatching {
         isSelling,
       };
       await this.task.save('Order', order).run({ useMongoose: true });
-      await this.matchNextOrder();
+      this.matchNextOrder();
     } catch (err) {
       console.log(err);
     }
