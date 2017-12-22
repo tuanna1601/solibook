@@ -1,7 +1,11 @@
 {
-  "name": "order-matching",
+  "name": "solibook",
   "version": "1.0.0",
   "description": "Limit orders matching",
+  "keywords": [
+    "liquidbook",
+    "order-matching"
+  ],
   "main": "./dist/index.js",
   "scripts": {
     "build": "babel src -s -D -d dist --presets es2015,stage-0",
@@ -11,6 +15,13 @@
   "author": {
     "name": "Tuan Nguyen",
     "email": "tuanna1601@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tuanna1601/solibook.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tuanna1601/solibook"
   },
   "license": "MIT",
   "devDependencies": {
