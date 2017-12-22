@@ -203,6 +203,8 @@ export default class OrderMatching {
         matchVolume: latestVolume,
         matchPrice: latestPrice,
       }).run({ useMongoose: true });
+
+      this.processing = false;
     } catch (err) {
       console.log(err);
     }
@@ -225,7 +227,7 @@ export default class OrderMatching {
         return;
       }
       await this.processOrder(order);
-      this.matchNextOrder();
+      await this.matchNextOrder();
     } catch (err) {
       console.log(err);
       this.processing = false;
@@ -246,7 +248,7 @@ export default class OrderMatching {
       this.task.save(this.orderModelName, order);
       this.onBeforePlaceOrder(this.task, orderId, limit, volume, userId, isSelling);
       await this.task.run({ useMongoose: true });
-      this.matchNextOrder();
+      await this.matchNextOrder();
     } catch (err) {
       console.log(err);
     }
