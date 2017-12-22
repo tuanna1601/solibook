@@ -145,7 +145,7 @@ export default class OrderMatching {
         this.onAfterMatched(this.task, order, matching, volume.valueOf(), price);
         await this.task.run({ useMongoose: true })
           .then((results) => {
-            if (results[0].nModified = 1) {
+            if (results && results[0] && results[0].nModified === 1) {
               order.currentVolume = BigNumber(order.currentVolume).minus(volume);
             }
           });
