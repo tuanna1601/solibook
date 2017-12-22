@@ -2,10 +2,11 @@
 
 import BigNumber from 'bignumber.js';
 import Co from 'co';
+import Fawn from 'fawn';
 import Mongoose from 'mongoose';
 
 export default class OrderMatching {
-  constructor(mongoose, fawn, prefix, onAfterMatched = () => { }) {
+  constructor(mongoose, fawn, prefix, onAfterMatched = () => { }, onBeforePlaceOrder = () => { }) {
 
     // order model
     const Schema = Mongoose.Schema;
@@ -87,6 +88,7 @@ export default class OrderMatching {
 
     this.task = fawn.Task();
     this.onAfterMatched = onAfterMatched;
+    this.onBeforePlaceOrder = onBeforePlaceOrder;
     this.matchNextOrder();
   }
 
@@ -235,7 +237,9 @@ export default class OrderMatching {
         userId,
         isSelling,
       };
-      await this.task.save(this.orderModelName, order).run({ useMongoose: true });
+      this.task.save(this.orderModelName, order);
+      this.onBeforePlaceOrder(this.task, limit, volume, userId, isSelling);
+      await this.task.run({ useMongoose: true });
       this.matchNextOrder();
     } catch (err) {
       console.log(err);
