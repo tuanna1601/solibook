@@ -86,7 +86,7 @@ export default class OrderMatching {
     this.marketDataModelName = `${prefix}_MarketData`;
     this.MarketData = mongoose.model(this.marketDataModelName, marketData);
 
-    this.task = fawn.Task();
+    this.fawn = fawn;
     this.matchNextOrder();
   }
 
@@ -131,7 +131,8 @@ export default class OrderMatching {
         const price = order.isSelling ? BigNumber.max(order.limit, matching.limit).valueOf() : order.limit;
         latestVolume = volume;
         latestPrice = price;
-        this.task
+        const task = this.fawn.Task();
+        task
           .update(this.orderModelName, {
             _id: order._id,
           }, {
@@ -142,8 +143,8 @@ export default class OrderMatching {
           }, {
             currentVolume: BigNumber(matching.currentVolume).minus(volume),
           });
-        this.onAfterMatched(this.task, order, matching, volume.valueOf(), price);
-        await this.task.run({ useMongoose: true })
+        this.onAfterMatched(task, order, matching, volume.valueOf(), price);
+        await task.run({ useMongoose: true })
           .then((results) => {
             if (results && results[0] && results[0].nModified === 1) {
               order.currentVolume = BigNumber(order.currentVolume).minus(volume);
@@ -243,9 +244,10 @@ export default class OrderMatching {
         userId,
         isSelling,
       };
-      this.task.save(this.orderModelName, order);
-      this.onBeforePlaceOrder(this.task, orderId, limit, volume, userId, isSelling);
-      await this.task.run({ useMongoose: true });
+      const task = this.fawn.Task();
+      task.save(this.orderModelName, order);
+      this.onBeforePlaceOrder(task, orderId, limit, volume, userId, isSelling);
+      await task.run({ useMongoose: true });
       this.matchNextOrder();
     } catch (err) {
       console.log(err);
@@ -254,14 +256,15 @@ export default class OrderMatching {
 
   async cancelOrder(orderId) {
     try {
-      this.task.update(this.orderModelName, {
+      const task = this.fawn.Task();
+      task.update(this.orderModelName, {
         _id: orderId,
       }, {
           status: 'canceled',
         })
       const order = await this.Order.findById(orderId);
-      this.onCancelOrder(this.task, order);
-      await this.task.run({ useMongoose: true });
+      this.onCancelOrder(task, order);
+      await task.run({ useMongoose: true });
 
     } catch (err) {
       console.log(err);
