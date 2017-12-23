@@ -143,7 +143,7 @@ export default class OrderMatching {
           }, {
             currentVolume: BigNumber(matching.currentVolume).minus(volume),
           });
-        this.onAfterMatched(task, order, matching, volume.valueOf(), price);
+        await this.onAfterMatched(task, order, matching, volume.valueOf(), price);
         await task.run({ useMongoose: true })
           .then((results) => {
             if (results && results[0] && results[0].nModified === 1) {
@@ -246,7 +246,7 @@ export default class OrderMatching {
       };
       const task = this.fawn.Task();
       task.save(this.orderModelName, order);
-      this.onBeforePlaceOrder(task, orderId, limit, volume, userId, isSelling);
+      await this.onBeforePlaceOrder(task, orderId, limit, volume, userId, isSelling);
       await task.run({ useMongoose: true });
       this.matchNextOrder();
     } catch (err) {
@@ -263,7 +263,7 @@ export default class OrderMatching {
           status: 'canceled',
         })
       const order = await this.Order.findById(orderId);
-      this.onCancelOrder(task, order);
+      await this.onCancelOrder(task, order);
       await task.run({ useMongoose: true });
 
     } catch (err) {
