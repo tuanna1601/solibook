@@ -156,8 +156,8 @@ export default class OrderMatching {
       await this.Order.update({
         _id: order._id,
       }, {
-        status: 'processed',
-      });
+          status: 'processed',
+        });
       // update MarketData
       const latestSellOrder = await this.Order.findOne({
         status: {
@@ -261,7 +261,7 @@ export default class OrderMatching {
         _id: orderId,
       }, {
           status: 'canceled',
-        })
+        });
       const order = await this.Order.findById(orderId);
       await this.onCancelOrder(task, order);
       await task.run({ useMongoose: true });
@@ -277,6 +277,18 @@ export default class OrderMatching {
         userId,
       }).lean();
       return orders;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async getOrder(orderId) {
+    try {
+      const order = await this.Order.findById(orderId).lean();
+      if (!order) {
+        throw new Error('Order not found');
+      }
+      return order;
     } catch (err) {
       console.log(err);
     }
