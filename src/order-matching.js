@@ -152,13 +152,11 @@ export default class OrderMatching {
       }
 
       // set processed
-      await this.task
-        .update(this.orderModelName, {
-          _id: order._id,
-        }, {
-          status: 'processed',
-        }).run({ useMongoose: true });
-
+      await this.Order.update({
+        _id: order._id,
+      }, {
+        status: 'processed',
+      });
       // update MarketData
       const latestSellOrder = await this.Order.findOne({
         status: {
@@ -195,14 +193,14 @@ export default class OrderMatching {
           latestPrice = latestMarketData.matchPrice;
       }
 
-      await this.task.save(this.marketDataModelName, {
+      await this.MarketData.create({
         sellVolume: latestSellOrder ? latestSellOrder.currentVolume : '',
         sellPrice: latestSellOrder ? latestSellOrder.limit : '',
         buyVolume: latestBuyOrder ? latestBuyOrder.currentVolume : '',
         buyPrice: latestBuyOrder ? latestBuyOrder.limit : '',
         matchVolume: latestVolume,
         matchPrice: latestPrice,
-      }).run({ useMongoose: true });
+      });
 
       this.processing = false;
     } catch (err) {
@@ -227,7 +225,7 @@ export default class OrderMatching {
         return;
       }
       await this.processOrder(order);
-      await this.matchNextOrder();
+      this.matchNextOrder();
     } catch (err) {
       console.log(err);
       this.processing = false;
@@ -248,7 +246,7 @@ export default class OrderMatching {
       this.task.save(this.orderModelName, order);
       this.onBeforePlaceOrder(this.task, orderId, limit, volume, userId, isSelling);
       await this.task.run({ useMongoose: true });
-      await this.matchNextOrder();
+      this.matchNextOrder();
     } catch (err) {
       console.log(err);
     }
